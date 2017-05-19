@@ -1,0 +1,62 @@
+#!/bin/bash
+
+CONFIG_FILE=~/.resolution-labels
+
+function receive_label_declare_statement {
+    awk -F '=' 'BEGIN {ORS=" "}
+    { 
+        gsub(/[ \t]+/, "", $1); 
+        gsub(/[ \t]+/, "", $2);
+        print "[" $1 "]=" $2
+    }' $CONFIG_FILE
+}
+
+function echo_help {
+    echo Usage: $0 mode
+    echo
+    echo -e Where mode can either be WxH$HELP_ADDENDUM
+    echo
+    echo 'Manage labels in ~/.resolution-labels.'
+}
+
+
+if [[ -r $CONFIG_FILE ]]
+then
+    eval 'declare -A LABELS=('`receive_label_declare_statement`')'
+    HELP_ADDENDUM=" one of these labels:"
+    for K in "${!LABELS[@]}"; do HELP_ADDENDUM="$HELP_ADDENDUM\n $K (${LABELS[$K]})"; done
+else
+    declare -A LABELS
+    HELP_ADDENDUM=" a label.\nYou haven't defined any labels, yet."
+fi
+
+if [[ $# != 1 ]]
+then
+    echo_help
+    exit 1
+fi
+
+if [[ -z ${LABELS[$1]} ]]
+then
+    RES=$1
+else
+    RES=${LABELS[$1]}
+fi
+
+pattern='^[0-9]+x[0-9]+$'
+if ! [[ $RES =~ $pattern ]]
+then
+    echo_help
+    exit 1
+fi
+W=`echo $RES | sed 's/x.*//'`
+H=`echo $RES | sed 's/.*x//'`
+
+
+if [[ -z `xrandr | grep ${W}x${H}` ]]
+then
+    xrandr --newmode ${W}x${H} `cvt $W $H | tail -n1 | sed 's/Modeline//; s/".*"//'`
+    xrandr --addmode Virtual1 ${W}x${H}
+fi
+
+xrandr --output Virtual1 --mode ${W}x${H}
