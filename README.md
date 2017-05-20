@@ -17,10 +17,11 @@ You could practically use any silly resolution. Useful for virtual machines.
 
 Labels are configured in ~/.resolution-labels like this
 
-    beamer 1280x720
-    laptop 1980x1050
+    beamer=1280x720
+    laptop=1980x1050
     
-So just label, space, resolution, newline :)
+So just label, =, resolution, newline :)
+You can use formatting spaces or tabs of course.
 
 You may now also call
 
