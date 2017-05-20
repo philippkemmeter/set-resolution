@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CONFIG_FILE=~/.resolution-labels
+LABELS_FILE=~/.resolution-labels
 
 function receive_label_declare_statement {
     awk -F '=' 'BEGIN {ORS=" "}
@@ -8,39 +8,59 @@ function receive_label_declare_statement {
         gsub(/[ \t]+/, "", $1); 
         gsub(/[ \t]+/, "", $2);
         print "[" $1 "]=" $2
-    }' $CONFIG_FILE
+    }' $LABELS_FILE
 }
 
 function echo_help {
-    echo Usage: $0 mode
+    echo "Usage: $0 [<output>] <mode>"
     echo
-    echo -e Where mode can either be WxH$HELP_ADDENDUM
+    echo '<output> defines one of the outputs xrandr will knows. If omitted, the first'
+    echo ' connected output will be used (as defined in xrandr).'
+    echo
+    echo -e "<mode> can either be WxH$HELP_LABELS_TEXT"
     echo
     echo 'Manage labels in ~/.resolution-labels.'
 }
 
 
-if [[ -r $CONFIG_FILE ]]
+if [[ -r $LABELS_FILE ]]
 then
     eval 'declare -A LABELS=('`receive_label_declare_statement`')'
-    HELP_ADDENDUM=" one of these labels:"
-    for K in "${!LABELS[@]}"; do HELP_ADDENDUM="$HELP_ADDENDUM\n $K (${LABELS[$K]})"; done
+    HELP_LABELS_TEXT=" one of these labels:"
+    for K in "${!LABELS[@]}"; do HELP_LABELS_TEXT="$HELP_LABELS_TEXT\n $K (${LABELS[$K]})"; done
 else
     declare -A LABELS
-    HELP_ADDENDUM=" a label.\nYou haven't defined any labels, yet."
+    HELP_LABELS_TEXT=" a label.\nYou haven't defined any labels, yet."
 fi
 
-if [[ $# != 1 ]]
+if [[ $# == 1 ]]
 then
+    OUTPUT=`xrandr | grep ' connected' | cut -d ' ' -f 1 | head -n1`
+    RES=$1
+
+    if [[ -z $OUTPUT ]]
+    then
+       >&2 echo "Couldn't detect any connected output."
+       exit 1
+    fi
+elif [[ $# == 2 ]]
+then
+    OUTPUT=$1
+    RES=$2
+
+    if [[ -z `xrandr | grep "$1 connected"` ]]
+    then
+        >&2 echo "Output invalid and/or not connected. Please choose another one."
+        exit 1
+    fi
+else
     echo_help
     exit 1
 fi
 
-if [[ -z ${LABELS[$1]} ]]
+if ! [[ -z ${LABELS[$RES]} ]]
 then
-    RES=$1
-else
-    RES=${LABELS[$1]}
+    RES=${LABELS[$RES]}
 fi
 
 pattern='^[0-9]+x[0-9]+$'

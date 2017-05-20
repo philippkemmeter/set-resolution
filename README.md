@@ -7,8 +7,9 @@ Features are:
 
 # Examples
 
-    set-resolution 1280x700
-    set-resolution 300x300
+    set-resolution VGA2 300x300
+    set-resolution Virtual7 300x300
+    set-resolution 1280x700  # uses the first connected output
 
 You could practically use any silly resolution. Useful for virtual machines.
 
@@ -25,9 +26,15 @@ You may now also call
 
     set-resolution beamer
     set-resolution laptop
+
+    set-resolution Virtual3 laptop
     
-an it will use the configured resolution behind the label.
+and it'll use the configured resolution.
 
-# Internal stuff
+# Internal stuff and dependancies
 
-It uses xrandr to change the resolution. If the resolution is not being found, its modeline is generated using cvt, added using xrandr again in order to be able to change it. So it's quite easy.
+It uses xrandr to change the resolution. If the resolution is not being found, its modeline is generated using cvt, added using xrandr, and then selected.
+
+Therefore xrandr needs to be installed. 
+
+Tested with xrandr 1.4.
